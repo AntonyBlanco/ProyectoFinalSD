@@ -76,6 +76,7 @@ class LaminaCliente extends JPanel implements Runnable {
             campoChat.append("\n" + campo1.getText());
 
             try {
+                // Cambiar el ip al host donde ServidorChat está corriendo
                 Socket miSocket = new Socket("192.168.83.1",9999);
 
                 PaqueteEnvio datos = new PaqueteEnvio();
