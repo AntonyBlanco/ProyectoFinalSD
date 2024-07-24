@@ -15,7 +15,7 @@ public class CrabchatFinalProy {
         int choice = scanner.nextInt();
 
         if (choice == 1) {
-            ClienteChat.main(args);
+            ClienteLogin.main(args);
             // Perform operations with the ClienteChat instance
         } else if (choice == 2) {
             ServidorChat.main(args);
