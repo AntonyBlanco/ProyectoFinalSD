@@ -22,13 +22,67 @@ public class ClienteLogin {
         MarcoLogin miMarco = new MarcoLogin();
         miMarco.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
+
+    public static void iniciarSesionAutomaticamente(String user, String pass, JFrame ventana) {
+        try {
+            URL url = new URL("http://localhost:3000/login");
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            con.setRequestProperty("Accept", "application/json");
+            con.setDoOutput(true);
+
+            String urlParameters = "identifier=" + URLEncoder.encode(user, "UTF-8") +
+                                   "&password=" + URLEncoder.encode(pass, "UTF-8");
+
+            try (OutputStream os = con.getOutputStream()) {
+                byte[] input = urlParameters.getBytes("utf-8");
+                os.write(input, 0, input.length);
+            }
+
+            int responseCode = con.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                try (BufferedReader br = new BufferedReader(
+                        new InputStreamReader(con.getInputStream(), "utf-8"))) {
+                    StringBuilder response = new StringBuilder();
+                    String responseLine;
+                    while ((responseLine = br.readLine()) != null) {
+                        response.append(responseLine.trim());
+                    }
+                    System.out.println("Inicio de sesión exitoso: " + response.toString());
+
+                    // Cerrar la ventana actual y proceder al chat
+                    if (ventana != null) {
+                        ventana.dispose();
+                    }
+                    String[] args = {};
+                    ClienteChat.main(args);
+                }
+            } else {
+                try (BufferedReader br = new BufferedReader(
+                        new InputStreamReader(con.getErrorStream(), "utf-8"))) {
+                    StringBuilder response = new StringBuilder();
+                    String responseLine;
+                    while ((responseLine = br.readLine()) != null) {
+                        response.append(responseLine.trim());
+                    }
+                    System.out.println("Error en el inicio de sesión: " + response.toString());
+                    JOptionPane.showMessageDialog(null, "Credenciales inválidas o error en el servidor: " + response.toString());
+                }
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error al conectar con el servidor.");
+        }
+    }
 }
 
 class MarcoLogin extends JFrame {
     public MarcoLogin() {
         setTitle("APP CLIENTE");
         setBounds(100, 50, 270, 450);
-        LaminaLogin lamina1 = new LaminaLogin(this);  // Pasar la referencia
+        LaminaLogin lamina1 = new LaminaLogin(this);
         add(lamina1);
         setVisible(true);
     }
@@ -38,7 +92,7 @@ class LaminaLogin extends JPanel {
     private JTextField usuario;
     private JPasswordField contrasena;
     private JButton botonLogin, botonRegister;
-    private JFrame marcoLogin;  // Referencia al marco de login
+    private JFrame marcoLogin;
 
     public LaminaLogin(JFrame marcoLogin) {
         this.marcoLogin = marcoLogin;
@@ -67,68 +121,13 @@ class LaminaLogin extends JPanel {
     private class IniciarSesion implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             String user = usuario.getText();
-            String pass = contrasena.getText();
-    
+            String pass = new String(contrasena.getPassword());
+
             if (user.isEmpty() || pass.isEmpty()) {
                 JOptionPane.showMessageDialog(null, "Por favor, complete todos los campos.");
                 return;
             }
-    
-            try {
-                URL url = new URL("http://localhost:3000/login");
-                HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                con.setRequestMethod("POST");
-                con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                con.setRequestProperty("Accept", "application/json");
-                con.setDoOutput(true);
-    
-                // Codificar los datos en URL
-                String urlParameters = "identifier=" + URLEncoder.encode(user, "UTF-8") +
-                                       "&password=" + URLEncoder.encode(pass, "UTF-8");
-    
-                System.out.println("URL Parameters: " + urlParameters);
-    
-                System.out.println(con.toString());
-                try (OutputStream os = con.getOutputStream()) {
-                    byte[] input = urlParameters.getBytes("utf-8");
-                    os.write(input, 0, input.length);
-                    os.flush(); // Asegurarse de que se envíen todos los datos
-                }
-    
-                int responseCode = con.getResponseCode();
-                System.out.println("Código de respuesta: " + responseCode);
-    
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    try (BufferedReader br = new BufferedReader(
-                            new InputStreamReader(con.getInputStream(), "utf-8"))) {
-                        StringBuilder response = new StringBuilder();
-                        String responseLine;
-                        while ((responseLine = br.readLine()) != null) {
-                            response.append(responseLine.trim());
-                        }
-                        System.out.println("Inicio de sesión exitoso: " + response.toString());
-    
-                        marcoLogin.dispose();
-                        String[] args = {};
-                        ClienteChat.main(args);
-                    }
-                } else {
-                    try (BufferedReader br = new BufferedReader(
-                            new InputStreamReader(con.getErrorStream(), "utf-8"))) {
-                        StringBuilder response = new StringBuilder();
-                        String responseLine;
-                        while ((responseLine = br.readLine()) != null) {
-                            response.append(responseLine.trim());
-                        }
-                        System.out.println("Error en el inicio de sesión: " + response.toString());
-                        JOptionPane.showMessageDialog(null, "Credenciales inválidas o error en el servidor: " + response.toString());
-                    }
-                }
-    
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error al conectar con el servidor.");
-            }
+            ClienteLogin.iniciarSesionAutomaticamente(user, pass, marcoLogin);
         }
     }
 

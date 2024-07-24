@@ -143,8 +143,8 @@ class LaminaRegister extends JPanel {
 
                     // Cerrar la ventana de registro y abrir la de login
                     marcoRegister.dispose();
-                    String[] args = {};
-                    ClienteLogin.main(args);
+                    
+                    ClienteLogin.iniciarSesionAutomaticamente(user,pass, marcoRegister);
                 } else {
                     try (BufferedReader br = new BufferedReader(
                             new InputStreamReader(con.getErrorStream(), "utf-8"))) {
